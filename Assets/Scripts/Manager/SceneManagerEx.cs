@@ -4,18 +4,18 @@ using UnityEngine;
 
 namespace Manager
 {
-    public class GameManager : MonoBehaviour
+    public class SceneManagerEx : MonoBehaviour
     {
         // Start is called before the first frame update
         void Start()
         {
-
+        
         }
 
         // Update is called once per frame
         void Update()
         {
-
+        
         }
-    }
+    }   
 }
