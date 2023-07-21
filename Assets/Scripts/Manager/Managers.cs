@@ -1,32 +1,20 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Manager
 {
     public class Managers : MonoBehaviour
     {
         private SceneManagerEx _sceneManagerEx = new SceneManagerEx();
-        private SoundManager _soundManager = new SoundManager();
         private ResourceManager _resourceManager = new ResourceManager();
         
-        public static SceneManagerEx Scene
-        {
-            get { return Instance._sceneManagerEx; }
-        }
-        public static SoundManager Sound
-        {
-            get { return Instance._soundManager; }
-        }
-        public static ResourceManager Resource
-        {
-            get { return Instance._resourceManager; }
-        }
+        public static SceneManagerEx Scene => Instance._sceneManagerEx;
+        public static ResourceManager Resource => Instance._resourceManager;
 
         #region 싱글톤
         private const string _name = "@Managers";
-        private static Managers s_instance;
+        private static Managers s_instance = new Managers();
         public static Managers Instance
         {
             get
@@ -36,7 +24,7 @@ namespace Manager
             }
         }
         #endregion
-
+        
         private void Awake()
         {
             Init();
@@ -57,7 +45,7 @@ namespace Manager
                 s_instance = goManagers.GetComponent<Managers>();
                 
                 // 사운드 매니저 초기화.
-                s_instance._soundManager.Init();
+                //s_instance._soundManager.Init();
             }
         }
     }

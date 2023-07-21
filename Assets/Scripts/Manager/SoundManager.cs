@@ -1,74 +1,80 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using Mono.Cecil.Cil;
+using System;
 using UnityEngine;
+using System.Collections.Generic;
 
-namespace Manager
+public class SoundManager : MonoBehaviour
 {
-    // ※ SoundManager 사용법: Managers.SoundManager.Play(Define.Sound type, string path → 오디오 파일 경로, float pitch = 1.0f)
-    public class SoundManager : MonoBehaviour
+    public static SoundManager Instance;
+
+    [Header("#BGM Sound")]
+    public AudioClip BgmClip;
+    public float BgmVolumeValue;
+    private AudioSource _bgmPlayer;
+
+    [Header("#Effect Sound")]
+    public AudioClip[] effectClips;
+    public float effectVolumeValue;
+    public int channels;
+    private AudioSource[] _effectPlayers;
+    private int _channelIndex;
+
+    private const string _bgmPlayerSound = "BgmSound";
+    private const string _effectPlayerSound = "effectSound";
+
+    private void Awake()
     {
-        // 사운드 오디오 소스
-        private AudioSource[] _audioSources = new AudioSource[(int) Define.Sound.MaxCount];
+        Instance = this;
+        Init();
+    }
 
-        // 사운드 오브젝트 이름
-        private const string _soundObjName = "@Sound";
+    private void Init()
+    {
+        // 1.배경음 사운드 초기화
+        GameObject bgmGameObject = new GameObject(_bgmPlayerSound);
+        bgmGameObject.transform.parent = transform;
+        _bgmPlayer = bgmGameObject.AddComponent<AudioSource>();
+        _bgmPlayer.playOnAwake = false;
+        _bgmPlayer.loop = true;
+        _bgmPlayer.volume = BgmVolumeValue;
+        _bgmPlayer.clip = BgmClip;
         
-        public void Init()
+        // 2.효과음 사운드 초기화
+        GameObject effectGameObject = new GameObject(_effectPlayerSound);
+        effectGameObject.transform.parent = transform;
+        _effectPlayers = new AudioSource[channels];
+
+        for (int index = 0; index < _effectPlayers.Length; index++)
         {
-            // 사운드 오브젝트 찾기
-            GameObject root = GameObject.Find(_soundObjName);
-            
-            // 사운드 오브젝트 없으면
-            if (root == null)
-            {
-                // 사운드 오브젝트 생성 후 삭제X
-                root = new GameObject {name = _soundObjName};
-                Object.DontDestroyOnLoad(root);
-                
-                // 사운드 이름 목록들을 추출한다.
-                string[] soundName = System.Enum.GetNames(typeof(Define.Sound));
-
-                // 사운드 개수만큼 사운드 오브젝트 객체 하위에 추가 [계층구조]
-                for (int i = 0; i < soundName.Length - 1; i++)
-                {
-                    GameObject go = new GameObject {name = soundName[i]};
-                    go.transform.parent = root.transform;
-                }
-
-                // BGM 오디오 소스는 무한 재생으로 설정한다.
-                _audioSources[(int)Define.Sound.Bgm].loop = true;
-            }
+            _effectPlayers[index] = effectGameObject.AddComponent<AudioSource>();
+            _effectPlayers[index].playOnAwake = false;
+            _effectPlayers[index].volume = effectVolumeValue;
         }
-
-        // path: 파일 위치, pitch: 재생 속도
-        public void Play(Define.Sound type, string path, float pitch = 1.0f)
+    }
+    
+    public void PlayBGM(bool isPlay)
+    {
+        if (isPlay)
         {
-            if (path.Contains("Sounds/") == false)
-                path = $"Sounds/{path}";
+            _bgmPlayer.Play();
+        }
+        else
+        {
+            _bgmPlayer.Stop();
+        }
+    }
 
-            AudioClip audioClip = Managers.Resource.Load<AudioClip>(path);
-            if (audioClip == null)
-            {
-                Debug.Log($"[장시진] AudioClip Missing! → path:{path}");
-                return;
-            }
+    public void PlayEffectSound(Define.Sound sound)
+    {
+        for (int index = 0; index < _effectPlayers.Length; index++)
+        {
+            int loopIndex = (index + _channelIndex) % _effectPlayers.Length;
             
-            switch (type)
-            {
-                case Define.Sound.Bgm:
-                    // TODO
-                    break;
-                case Define.Sound.Effect:
-                    // [사운드 이팩트]
-                    AudioSource audioSource = _audioSources[(int) Define.Sound.Effect];
-                    audioSource.pitch = pitch;
-                    audioSource.PlayOneShot(audioClip);
-                    break;
-                default:                    
-                    break;
-            }
+            if(_effectPlayers[loopIndex].isPlaying)
+                continue;
+
+            _channelIndex = loopIndex;
+            _effectPlayers[loopIndex].clip = effectClips[(int) sound];
+            _effectPlayers[loopIndex].Play();
         }
     }
 }
